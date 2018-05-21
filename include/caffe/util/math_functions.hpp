@@ -12,6 +12,12 @@
 
 namespace caffe {
 
+extern int g_exp_bits;
+extern int g_frac_bits;
+extern bool g_stohastic;
+
+float Clip(float src);
+
 // Caffe gemm provides a simpler interface to the gemm functions, with the
 // limitation that the data has to be contiguous in memory.
 template <typename Dtype>

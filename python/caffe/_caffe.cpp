@@ -18,6 +18,7 @@
 #include "caffe/layers/memory_data_layer.hpp"
 #include "caffe/layers/python_layer.hpp"
 #include "caffe/sgd_solvers.hpp"
+#include "caffe/util/math_functions.hpp"
 
 // Temporary solution for numpy < 1.7 versions: old macro, no promises.
 // You're strongly advised to upgrade to >= 1.7.
@@ -46,6 +47,14 @@ namespace caffe {
 // For Python, for now, we'll just always use float as the type.
 typedef float Dtype;
 const int NPY_DTYPE = NPY_FLOAT32;
+
+void set_clip_params(int exp_bits, int fraction_bits, bool stohastic)
+{
+  std::cout << "Set clip params (exp_bits = " << exp_bits << ", frac_bits = " << fraction_bits << ", stohastic = " << stohastic << ")" << std::endl;
+  g_exp_bits = exp_bits;
+  g_frac_bits = fraction_bits;
+  g_stohastic = stohastic;
+}
 
 // Selecting mode.
 void set_mode_cpu() { Caffe::set_mode(Caffe::CPU); }
@@ -385,6 +394,7 @@ BOOST_PYTHON_MODULE(_caffe) {
   bp::scope().attr("__version__") = AS_STRING(CAFFE_VERSION);
 
   // Caffe utility functions
+  bp::def("set_clip_params", &set_clip_params);
   bp::def("init_log", &InitLog);
   bp::def("init_log", &InitLogLevel);
   bp::def("init_log", &InitLogLevelPipe);

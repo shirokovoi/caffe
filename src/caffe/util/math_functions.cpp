@@ -6,8 +6,60 @@
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
+#include <random>
 
 namespace caffe {
+
+int g_exp_bits = 0;
+int g_frac_bits = 0;
+bool g_stohastic = false;
+
+float Clip(float src)
+{
+	int fraction_bits = g_frac_bits;
+	int exponent_bits = g_exp_bits;
+	bool stohastic = g_stohastic;
+
+	uint32_t src_u32 = *((uint32_t*)&src);
+
+	uint32_t sign = src_u32 & 0x80000000;
+	uint32_t exp = (src_u32 & 0x7f800000);
+	if (exp == 0x7F800000) // Inf
+	{
+		return src;
+	}
+
+	uint32_t frac = src_u32 & 0x007fffff;
+
+	if (fraction_bits != 0 && fraction_bits < 23)
+	{
+		uint32_t frac_mask = (uint32_t)0x007fffff >> ((uint32_t)23 - fraction_bits);
+		uint32_t value = frac & frac_mask;
+		frac = frac & ~frac_mask;
+
+		if (stohastic)
+		{
+			std::uniform_real_distribution<double> rd(0, 1);
+			std::random_device device;
+
+			double p = value / std::pow(2, (fraction_bits + 1));
+			if (rd(device) > p)
+			{
+				frac += (1 << (fraction_bits + 1));
+				frac &= 0x007fffff;
+			}
+		}
+	}
+
+	float out;
+	uint32_t *out_ptr = (uint32_t*)&out;
+	memset(out_ptr, 0, sizeof(out));
+
+	(*out_ptr) |= frac;
+	(*out_ptr) |= exp;
+	(*out_ptr) |= sign;
+	return out;
+}
 
 template<>
 void caffe_cpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
@@ -18,6 +70,15 @@ void caffe_cpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B,
       ldb, beta, C, N);
+
+  for (int line = 0; line < M; line++)
+  {
+  	for (int column = 0; column < N; column++)
+    {
+    	float& value = C[N * line + column];
+    	value = Clip(value);
+    }
+  }
 }
 
 template<>
