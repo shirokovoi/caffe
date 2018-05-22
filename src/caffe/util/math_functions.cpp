@@ -33,9 +33,9 @@ float Clip(float src)
 
 	if (fraction_bits != 0 && fraction_bits < 23)
 	{
-		uint32_t frac_mask = (uint32_t)0x007fffff >> ((uint32_t)23 - fraction_bits);
-		uint32_t value = frac & frac_mask;
-		frac = frac & ~frac_mask;
+		uint32_t frac_mask = (uint32_t)0x007fffff << ((uint32_t)23 - fraction_bits);
+		uint32_t value = frac & ~frac_mask;
+		frac = frac & frac_mask;
 
 		if (stohastic)
 		{
