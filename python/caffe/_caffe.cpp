@@ -51,7 +51,8 @@ const int NPY_DTYPE = NPY_FLOAT32;
 void set_clip_params(int exp_bits, int fraction_bits, bool stohastic)
 {
   std::cout << "Set clip params (exp_bits = " << exp_bits << ", frac_bits = " << fraction_bits << ", stohastic = " << stohastic << ")" << std::endl;
-  g_exp_bits = exp_bits;
+//  g_exp_bits = exp_bits;
+  g_exp_max_value = std::pow(2, exp_bits) - 2;
   g_frac_bits = fraction_bits;
   g_stohastic = stohastic;
 }

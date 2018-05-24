@@ -11,13 +11,15 @@
 namespace caffe {
 
 int g_exp_bits = 0;
-int g_frac_bits = 0;
+int g_exp_max_value = 0;
 bool g_stohastic = false;
+std::random_device device;
+std::uniform_real_distribution<double> rd(0, 1);
+
 
 float Clip(float src)
 {
 	int fraction_bits = g_frac_bits;
-	int exponent_bits = g_exp_bits;
 	bool stohastic = g_stohastic;
 
 	uint32_t src_u32 = *((uint32_t*)&src);
@@ -39,9 +41,6 @@ float Clip(float src)
 
 		if (stohastic)
 		{
-			std::uniform_real_distribution<double> rd(0, 1);
-			std::random_device device;
-
 			double p = value / std::pow(2, (fraction_bits + 1));
 			if (rd(device) > p)
 			{
@@ -49,6 +48,21 @@ float Clip(float src)
 				frac &= 0x007fffff;
 			}
 		}
+	}
+
+	if (g_exp_max_value != 0)
+	{
+		int32_t value = ((src_u32 >> 23) & 0xFF) - 127;
+		if (value > g_exp_max_value)
+		{
+			value = 127;
+		}
+		else if (value < -g_exp_max_value)
+		{
+			return 0;
+		}
+
+		exp = (value + 127) << 23;
 	}
 
 	float out;

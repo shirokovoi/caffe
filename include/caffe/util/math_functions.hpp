@@ -12,7 +12,7 @@
 
 namespace caffe {
 
-extern int g_exp_bits;
+extern int g_exp_max_value;
 extern int g_frac_bits;
 extern bool g_stohastic;
 
